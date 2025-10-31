@@ -3612,68 +3612,58 @@
     }
 
     async function fetchGoogleSheetData(sheetName) {
-        progressBar.classList.add('active');
-        
-        const cachedData = cacheManager.get(sheetName);
-        if (cachedData) {
-            progressBar.classList.remove('active');
-            return cachedData;
-        }
-        
-        if (!SPREADSHEET_ID || SPREADSHEET_ID === 'PASTE_YOUR_SPREADSHEET_ID_HERE') {
-            console.error("SPREADSHEET_ID is not set. Please paste your Google Sheet ID.");
-            progressBar.classList.remove('active');
-            return [];
-        }
-        if (!API_KEY || API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
-            console.error("API_KEY is not set. Please paste your Google Sheets API Key.");
-            progressBar.classList.remove('active');
-            return [];
-        }
-
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${sheetName}?key=${API_KEY}`;
-
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-
-            if (!data.values || data.values.length < 2) {
-                console.warn(`No data found in sheet: "${sheetName}"`);
-                progressBar.classList.remove('active');
-                return [];
-            }
-
-            const headers = data.values[0].map(h => h.toLowerCase().replace(/\s/g, ''));
-            const rows = data.values.slice(1);
-
-            const items = rows.map(row => {
-                const item = {};
-                headers.forEach((header, index) => {
-                    item[header] = row[index] || '';
-                });
-                return item;
-            });
-            
-            cacheManager.set(sheetName, items);
-            
-            progressBar.classList.remove('active');
-            return items;
-        } catch (error) {
-            console.error(`Error fetching or parsing data from Google Sheet "${sheetName}":`, error);
-            progressBar.classList.remove('active');
-            
-            const fallbackData = cacheManager.get(sheetName);
-            if (fallbackData) {
-                console.log('Using cached data due to network error');
-                return fallbackData;
-            }
-            
-            throw error;
-        }
+    progressBar.classList.add('active');
+    
+    const cachedData = cacheManager.get(sheetName);
+    if (cachedData) {
+        progressBar.classList.remove('active');
+        return cachedData;
     }
+    
+    // Yahan hum apne middleman server ko call kar rahe hain
+    const url = `/api/getData?sheet=${sheetName}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (!data.values || data.values.length < 2) {
+            console.warn(`No data found in sheet: "${sheetName}"`);
+            progressBar.classList.remove('active');
+            return [];
+        }
+
+        const headers = data.values[0].map(h => h.toLowerCase().replace(/\s/g, ''));
+        const rows = data.values.slice(1);
+
+        const items = rows.map(row => {
+            const item = {};
+            headers.forEach((header, index) => {
+                item[header] = row[index] || '';
+            });
+            return item;
+        });
+        
+        cacheManager.set(sheetName, items);
+        
+        progressBar.classList.remove('active');
+        return items;
+    } catch (error) {
+        console.error(`Error fetching from our API for sheet "${sheetName}":`, error);
+        progressBar.classList.remove('active');
+        
+        const fallbackData = cacheManager.get(sheetName);
+        if (fallbackData) {
+            console.log('Using cached data due to network error');
+            return fallbackData;
+        }
+        
+        throw error;
+    }
+}
 
     // MODIFIED: createCategoryRow function to identify trending section
     const createCategoryRow = (title, contentHtml) => {
@@ -5484,4 +5474,5 @@ playerContainer.innerHTML = `
 </script>
 
 </body>
+
 </html>
