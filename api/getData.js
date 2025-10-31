@@ -20,7 +20,8 @@ export default async function handler(request, response) {
       throw new Error(`Google Sheets API error! status: ${fetchResponse.status}`);
     }
     const data = await fetchResponse.json();
-
+// Vercel ko batayenge ki is response ko cache na kare
+response.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     // Data user ko wapas bhej denge
     response.status(200).json(data);
   } catch (error) {
