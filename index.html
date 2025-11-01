@@ -5299,7 +5299,6 @@ window.showDownloadOptions = (links) => {
     const createContentCard = (item, isGridItem = false, isFromSearch = false) => {
         // FIXED: Simplified availability check - just check if item has id and type
         const isAvailable = item.id && (item.type === 'movie' || item.type === 'series' || item.type === 'animation' || item.type === 'tv');
-
         let action = isAvailable ? `showDetailView('${item.id}', '${item.type}')` : '';
         if (isAvailable && isFromSearch) {
             action = `closeSearchOverlay(); showDetailView('${item.id}', '${item.type}')`;
@@ -5577,4 +5576,5 @@ window.showDownloadOptions = (links) => {
 </script>
 
 </body>
+
 </html>
